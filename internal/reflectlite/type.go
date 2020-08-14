@@ -61,7 +61,7 @@ type Type interface {
 
 // Kind 代表类型所代表的特定类型。
 // 零种类不是有效种类。
-type Kind uint //注：26种go自带数据类型
+type Kind uint //注：27种go自带数据类型
 
 const (
 	//Invalid 0	无效类型
@@ -164,12 +164,12 @@ const (
 // tflag[7]：外部类型结构是否有uncommonType
 type rtype struct {
 	size       uintptr //注：大小
-	ptrdata    uintptr // 类型中可以包含指针的字节数
+	ptrdata    uintptr // 类型中可以包含指针的字节数 注：如果ptrdata != 0，即为有指向数据的指针
 	hash       uint32  // 类型的哈希； 避免在哈希表中进行计算
 	tflag      tflag   // 额外类型信息标志
 	align      uint8   // 将此类型的变量对齐
 	fieldAlign uint8   // 将此类型的结构字段对齐
-	kind       uint8   // C的枚举，注：Kind&Kindmask计算得出26种内部类型
+	kind       uint8   // C的枚举，注：Kind&Kindmask计算得出27种内部类型
 	// 比较此类对象的函数
 	//（将ptr指向对象A，将ptr指向对象B）-> ==
 	equal     func(unsafe.Pointer, unsafe.Pointer) bool //注：是否可以比较，不为nil则可以比较
@@ -188,7 +188,7 @@ type method struct {
 
 // uncommonType 仅对定义的类型或带有方法的类型存在（如果T是定义的类型，则T和*T的uncommonTypes具有方法）。
 // 使用指向此结构的指针可减少描述没有方法的未定义类型所需的总体大小。
-type uncommonType struct {
+type uncommonType struct { //注：类型的方法
 	pkgPath nameOff // 导入路径； 对于内置类型（如int，string）为空
 	mcount  uint16  // 方法数量
 	xcount  uint16  // 导出方法的数量，注：第一个字母为大写的方法
@@ -332,7 +332,7 @@ type structType struct {
 // name.bytes：标签长度低位，与标签长度高位组合为l1，是标签长度
 // offset：3+l+2 - 3+l+2+l1
 // name.bytes：标签数据
-type name struct {
+type name struct { //注：包信息
 	bytes *byte
 }
 
@@ -401,9 +401,9 @@ func (n name) pkgPath() string { //注：返回n的包路径
  */
 
 const (
-	kindDirectIface = 1 << 5       //注：是否间接存储再接口值中
+	kindDirectIface = 1 << 5       //注：0010 0000，是否间接存储再接口值中（即是否为指针）
 	kindGCProg      = 1 << 6       //Type.gc指向GC程序
-	kindMask        = (1 << 5) - 1 //注：11111，类型掩码
+	kindMask        = (1 << 5) - 1 //注：0001 1111，类型掩码
 )
 
 func (t *uncommonType) methods() []method { //注：返回t的所有方法
@@ -512,7 +512,7 @@ func (t *rtype) Size() uintptr { return t.size } //注：返回t的大小
 
 func (t *rtype) Kind() Kind { return Kind(t.kind & kindMask) } //注：根据t.kind获取t的类型
 
-func (t *rtype) pointers() bool { return t.ptrdata != 0 } //注：#
+func (t *rtype) pointers() bool { return t.ptrdata != 0 } //注：t是否为指针
 
 func (t *rtype) common() *rtype { return t } //注：返回t本身
 
@@ -524,12 +524,12 @@ func (t *rtype) exportedMethods() []method { //注：返回t的所有导出方�
 	return ut.exportedMethods() //注：返回t的所有导出方法
 }
 
-func (t *rtype) NumMethod() int {
+func (t *rtype) NumMethod() int { //注：返回t的所有方法数
 	if t.Kind() == Interface { //注：如果t是接口
 		tt := (*interfaceType)(unsafe.Pointer(t))
 		return tt.NumMethod() //注：返回t接口中的所有方法数
 	}
-	return len(t.exportedMethods()) //注：否则返回t中的所有导出方法
+	return len(t.exportedMethods()) //注：否则返回t中的所有导出方法数
 }
 
 func (t *rtype) PkgPath() string {
@@ -604,15 +604,15 @@ func (t *rtype) Key() Type {
 	return toType(tt.key) //注：返回集合的键
 }
 
-func (t *rtype) Len() int {
+func (t *rtype) Len() int { //注：返回数组类型t的长度
 	if t.Kind() != Array {
-		panic("reflect: Len of non-array type")
+		panic("reflect: Len of non-array type") //恐慌："非数组类型长度"
 	}
 	tt := (*arrayType)(unsafe.Pointer(t))
 	return int(tt.len)
 }
 
-func (t *rtype) NumField() int {
+func (t *rtype) NumField() int { //注：返回结构体t的字段数量
 	if t.Kind() != Struct {
 		panic("reflect: NumField of non-struct type")
 	}
@@ -636,12 +636,12 @@ func (t *rtype) NumOut() int { //注：返回t的输出参数数量
 	return len(tt.out()) //注：返回t的输出参数数量
 }
 
-func (t *rtype) Out(i int) Type {
-	if t.Kind() != Func {
-		panic("reflect: Out of non-func type")
+func (t *rtype) Out(i int) Type { //注：返回t的第i个输出参数
+	if t.Kind() != Func { //注：t的类型必须为方法
+		panic("reflect: Out of non-func type") //恐慌："超出非函数类型"
 	}
 	tt := (*funcType)(unsafe.Pointer(t))
-	return toType(tt.out()[i])
+	return toType(tt.out()[i]) //注：返回t的第i个输出参数
 }
 
 func (t *funcType) in() []*rtype { //注：获取函数类型的t的所有输入参数（形参）
@@ -686,7 +686,7 @@ func TypeOf(i interface{}) Type { //注：返回i的动态反射类型
 	return toType(eface.typ)
 }
 
-func (t *rtype) Implements(u Type) bool {
+func (t *rtype) Implements(u Type) bool { //注：检查t作为接口或作为类型，是否可以实现u
 	if u == nil { //注：u不能为nil
 		panic("reflect: nil type passed to Type.Implements") //恐慌："nil类型传递给Type.Implements"
 	}
@@ -788,7 +788,7 @@ func implements(T, V *rtype) bool { //注：检查V作为接口或作为类型�
 
 // directAssignable 报告是否可以将V类型的值x直接（使用记忆）分配给T类型的值。
 // https://golang.org/doc/go_spec.html#Assignability忽略接口规则（在其他地方实现）和理想常量规则（运行时没有理想常量）。
-func directlyAssignable(T, V *rtype) bool {
+func directlyAssignable(T, V *rtype) bool { //注：（是否可直接分配）返回是否可以将V类型的值直接分配给T类型的值
 	// x的类型V == T？
 	if T == V {
 		return true
@@ -803,7 +803,7 @@ func directlyAssignable(T, V *rtype) bool {
 	return haveIdenticalUnderlyingType(T, V, true)
 }
 
-func haveIdenticalType(T, V Type, cmpTags bool) bool { //注：返回T和V的名称、类型与元素是否相同,cmpTags标识是否可以进行直接比较
+func haveIdenticalType(T, V Type, cmpTags bool) bool { //注：返回T和V的名称、类型与元素是否相同，cmpTags标识是否可以进行直接比较
 	if cmpTags { //注：是否可以直接比较
 		return T == V
 	}
@@ -815,7 +815,7 @@ func haveIdenticalType(T, V Type, cmpTags bool) bool { //注：返回T和V的名
 	return haveIdenticalUnderlyingType(T.common(), V.common(), false) //注：#
 }
 
-func haveIdenticalUnderlyingType(T, V *rtype, cmpTags bool) bool { //注：返回T和V是否相同,cmpTags标识是否可以进行直接比较
+func haveIdenticalUnderlyingType(T, V *rtype, cmpTags bool) bool { //注：返回T和V是否相同，cmpTags标识是否可以进行直接比较
 	if T == V { //注：完全相同，返回true
 		return true
 	}
@@ -926,6 +926,6 @@ func toType(t *rtype) Type { //注：将t转为Type格式返回
 }
 
 // ifaceIndir 报告t是否间接存储在接口值中。
-func ifaceIndir(t *rtype) bool { //注：报告t是否间接存储在接口值中。
+func ifaceIndir(t *rtype) bool { //注：报告t是否间接（作为指针）存储在接口值中。
 	return t.kind&kindDirectIface == 0
 }
