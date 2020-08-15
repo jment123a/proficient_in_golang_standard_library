@@ -15,8 +15,6 @@
 	布尔类型:
 		%t	单词true或false
 
-		注：
-		%t：true或false
 	整数:
 		%b	二进制
 		%c	相应的Unicode代码点表示的字符

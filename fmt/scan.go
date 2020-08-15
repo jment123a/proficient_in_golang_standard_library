@@ -53,7 +53,7 @@ type Scanner interface {
 // f结尾：需要传入格式化字符串
 
 // 调用链：
-// Scan（输入源为os.Stdin）、Sscan（输入源为字符串）——Fscan（）——doScan（）
+// Scan（输入源为os.Stdin）、Sscan（输入源为字符串）——Fscan（）——doScan（）——scanOne——scanxxx——get
 // Scanln（输入源为os.Stdin）、Sscanln（输入源为字符串）——Fscanln（通过换行符\n结束输入）——doScan（）
 // Scanf（输入源为os.Stdin）、Sscanf（输入源为字符串）——Fscanf（使用格式化字符串）——doScanf（）
 
