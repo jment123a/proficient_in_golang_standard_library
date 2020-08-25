@@ -34,7 +34,7 @@ func equalIgnoreCase(s1, s2 string) bool { //注：返回s1是否等于s2（不�
 	return true //注：全部相同则返回true
 }
 
-func special(s string) (f float64, ok bool) { //注：将s格式化为无穷大与非数字f与是否格式化成功ok
+func special(s string) (f float64, ok bool) { //注：将s格式化为无穷数与非数字f，与是否格式化成功ok
 	if len(s) == 0 {
 		return
 	}
@@ -166,7 +166,7 @@ func (b *decimal) set(s string) (ok bool) {
 }
 
 // readFloat 从浮点字符串表示形式读取十进制尾数和指数。 如果该数字无效，则返回ok == false。
-func readFloat(s string) (mantissa uint64, exp int, neg, trunc, hex, ok bool) { //注：将字符串表示的s读取十进制的整数mantissa，返回整数mantissa，指数的位置xpe，是否为负数neg，是否截取字符串trunc，是否为16进制hex，是否获取成功ok
+func readFloat(s string) (mantissa uint64, exp int, neg, trunc, hex, ok bool) { //注：从浮点字符串s中读取十进制的整数mantissa，返回整数mantissa，指数的位置exp，是否为负数neg，是否截取字符串trunc，是否为16进制hex，是否获取成功ok
 	// 形参：
 	// mantissa：数据
 	// exp：指数在数字中的位置
@@ -503,22 +503,18 @@ func atof32exact(mantissa uint64, exp int, neg bool) (f float32, ok bool) {
 	return
 }
 
-// atofHex converts the hex floating-point string s
-// to a rounded float32 or float64 value (depending on flt==&float32info or flt==&float64info)
-// and returns it as a float64.
-// The string s has already been parsed into a mantissa, exponent, and sign (neg==true for negative).
-// If trunc is true, trailing non-zero bits have been omitted from the mantissa.
+// atofHex 将十六进制浮点字符串s转换为舍入的float32或float64值（取决于flt==&float32info或flt==&float64info），并将其返回为float64。
+// 字符串s已被解析为尾数，指数和符号（neg == true为负）。
+// 如果trunc为true，则尾数中省略了尾随的非零位。
 func atofHex(s string, flt *floatInfo, mantissa uint64, exp int, neg, trunc bool) (float64, error) {
-	maxExp := 1<<flt.expbits + flt.bias - 2
-	minExp := flt.bias + 1
-	exp += int(flt.mantbits) // mantissa now implicitly divided by 2^mantbits.
+	maxExp := 1<<flt.expbits + flt.bias - 2 // 注：127，最大指数范围
+	minExp := flt.bias + 1                  // 注：-126，最小指数范围
+	exp += int(flt.mantbits)                // 尾数现在隐式除以 2^mantbits.
 
-	// Shift mantissa and exponent to bring representation into float range.
-	// Eventually we want a mantissa with a leading 1-bit followed by mantbits other bits.
-	// For rounding, we need two more, where the bottom bit represents
-	// whether that bit or any later bit was non-zero.
-	// (If the mantissa has already lost non-zero bits, trunc is true,
-	// and we OR in a 1 below after shifting left appropriately.)
+	// 转换尾数和指数以将表示形式带入浮动范围。
+	// 最终，我们希望尾数具有前导1位，后跟其他位。
+	// 为了进行四舍五入，我们还需要另外两个，其中最低位表示该位还是以后的任何位都不为零。
+	// （如果尾数已经丢失了非零位，则trunc为true，我们在向左偏移后将OR减为1）。
 	for mantissa != 0 && mantissa>>(flt.mantbits+2) == 0 {
 		mantissa <<= 1
 		exp--
@@ -576,16 +572,16 @@ func atofHex(s string, flt *floatInfo, mantissa uint64, exp int, neg, trunc bool
 const fnParseFloat = "ParseFloat"
 
 func atof32(s string) (f float32, err error) {
-	if val, ok := special(s); ok {
+	if val, ok := special(s); ok { // 注：获取无穷大或非数字
 		return float32(val), nil
 	}
 
-	mantissa, exp, neg, trunc, hex, ok := readFloat(s)
+	mantissa, exp, neg, trunc, hex, ok := readFloat(s) // 注：读取float
 	if !ok {
-		return 0, syntaxError(fnParseFloat, s)
+		return 0, syntaxError(fnParseFloat, s) // 错误："语法错误"
 	}
 
-	if hex {
+	if hex { // 注：如果s是16进制
 		f, err := atofHex(s, &float32info, mantissa, exp, neg, trunc)
 		return float32(f), err
 	}

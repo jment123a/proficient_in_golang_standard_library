@@ -57,10 +57,13 @@ type Value struct {
 type flag uintptr
 
 const (
-	flagKindWidth        = 5                          //有27种 //注：Value的类型枚举，在reflectlite/type.go中Kind表示
-	flagKindMask    flag = 1<<flagKindWidth - 1       //注：0000 0001 1111，获取flag的倒数5位，记录类型枚举
-	flagStickyRO    flag = 1 << 5                     //注：0000 0010 0000，获取flag的倒数第6位，是否通过未导出的未嵌入字段获得的
-	flagEmbedRO     flag = 1 << 6                     //注：0000 0100 0000，获取flag的倒数第7位，是否通过未导出的嵌入式字段获得的
+	flagKindWidth      = 5                    //有27种 //注：Value的类型枚举，在reflectlite/type.go中Kind表示
+	flagKindMask  flag = 1<<flagKindWidth - 1 //注：0000 0001 1111，获取flag的倒数5位，记录类型枚举
+	flagStickyRO  flag = 1 << 5               //注：0000 0010 0000，获取flag的倒数第6位，是否通过未导出的未嵌入字段获得的
+	flagEmbedRO   flag = 1 << 6               //注：0000 0100 0000，获取flag的倒数第7位，是否通过未导出的嵌入式字段获得的
+	// flagIndir
+	// 为0时，Value.ptr是一个指向（指向数据的指针）的指针，间接指针
+	// 为1时，Value.ptr是一个指向数据的指针
 	flagIndir       flag = 1 << 7                     //注：0000 1000 0000，获取flag的倒数第8位，是否有指向数据的指针
 	flagAddr        flag = 1 << 8                     //注：0001 0000 0000，获取flag的倒数第9位，是否可以寻址（是否分配内存）
 	flagMethod      flag = 1 << 9                     //注：0010 0000 0000，获取flag的倒数第10位

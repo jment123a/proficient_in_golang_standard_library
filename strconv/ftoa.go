@@ -12,15 +12,15 @@ package strconv
 
 import "math"
 
-// TODO：移到其他地方？
+// TODO：移到其他地方？注：确实
 type floatInfo struct {
-	mantbits uint //注：整数的位置
-	expbits  uint //注：小数的位置
-	bias     int  //注：
+	mantbits uint //注：尾数的位置
+	expbits  uint //注：指数的位置
+	bias     int  //注：最小指数
 }
 
-var float32info = floatInfo{23, 8, -127}
-var float64info = floatInfo{52, 11, -1023}
+var float32info = floatInfo{23, 8, -127}   // 注：32位float，1为符号位，23位尾数，8位指数，指数范围为-127 ~ 128
+var float64info = floatInfo{52, 11, -1023} // 注：64位float，1为符号位，52位尾数，11位指数，指数范围为-1023 ~ 1024
 
 // FormatFloat 根据fmt和精度 prec格式将浮点数f转换为字符串。
 // 假设原始结果是从bitSize位的浮点值（float32为32，float64为64）获得的，则对结果进行四舍五入。
@@ -69,10 +69,10 @@ func genericFtoa(dst []byte, val float64, fmt byte, prec, bitSize int) []byte {
 
 	neg := bits>>(flt.expbits+flt.mantbits) != 0          //注：获取符号位（例：类型为float32，mant为23，exp为8，32位>>31位，得出符号位）
 	exp := int(bits>>flt.mantbits) & (1<<flt.expbits - 1) //注：获取指数，(1<<flt.expbits - 1)得出小数位数，bits右移得出小数，索引0开始为小数部分
-	mant := bits & (uint64(1)<<flt.mantbits - 1)          //注：获取整数，(uint64(1)<<flt.mantbits - 1)得出整数位数，索引0开始为整数部分
+	mant := bits & (uint64(1)<<flt.mantbits - 1)          //注：获取尾数，(uint64(1)<<flt.mantbits - 1)得出整数位数，索引0开始为整数部分
 
 	switch exp {
-	case 1<<flt.expbits - 1: //注：#
+	case 1<<flt.expbits - 1: //注：指数为最大值
 		// 无限或NanN
 		var s string
 		switch {
@@ -97,7 +97,7 @@ func genericFtoa(dst []byte, val float64, fmt byte, prec, bitSize int) []byte {
 
 	// 选择简单的二进制，十六进制格式。
 	if fmt == 'b' {
-		return fmtB(dst, neg, mant, exp, flt)
+		return fmtB(dst, neg, mant, exp, flt) // 注：将尾数mant与指数exp结合，根据neg判断整数是否为负数，将数据存储在dst中并返回
 	}
 	if fmt == 'x' || fmt == 'X' {
 		return fmtX(dst, prec, fmt, neg, mant, exp, flt)
@@ -237,21 +237,18 @@ func roundShortest(d *decimal, mant uint64, exp int, flt *floatInfo) {
 		return
 	}
 
-	// Compute upper and lower such that any decimal number
-	// between upper and lower (possibly inclusive)
-	// will round to the original floating point number.
+	// 计算上限和下限，以使上限和下限之间的任何十进制数字（可能包含在内）都将舍入到原始浮点数。
 
-	// We may see at once that the number is already shortest.
+	// 我们可能会立即看到该数字已经最短了。
 	//
-	// Suppose d is not denormal, so that 2^exp <= d < 10^dp.
-	// The closest shorter number is at least 10^(dp-nd) away.
-	// The lower/upper bounds computed below are at distance
-	// at most 2^(exp-mantbits).
+	// 假设d不是非正规的，那么2^exp <= d < 10^dp。
+	// 最接近的较短数字至少相距10^(dp-nd)。
+	// 下面计算的上下限距离最大为2^(exp-mantbits)。
 	//
-	// So the number is already shortest if 10^(dp-nd) > 2^(exp-mantbits),
-	// or equivalently log2(10)*(dp-nd) > exp-mantbits.
-	// It is true if 332/100*(dp-nd) >= exp-mantbits (log2(10) > 3.32).
-	minexp := flt.bias + 1 // minimum possible exponent
+	// 因此，如果10^(dp-nd) > 2^(exp-mantbits)，
+	// 或者等效地log2(10)*(dp-nd) > exp-mantbits，则该数字已经是最短的。
+	// 如果 332/100*(dp-nd) >= exp-mantbits (log2(10) > 3.32)，则为true。
+	minexp := flt.bias + 1 // 最小可能指数
 	if exp > minexp && 332*(d.dp-d.nd) >= 100*(exp-int(flt.mantbits)) {
 		// The number is already shortest.
 		return
@@ -462,7 +459,7 @@ func fmtF(dst []byte, neg bool, d decimalSlice, prec int) []byte {
 }
 
 // %b: -ddddddddp±ddd
-func fmtB(dst []byte, neg bool, mant uint64, exp int, flt *floatInfo) []byte { //注：将整数mant与指数exp结合，根据neg判断整数是否为负数，将数据存储在dst中并返回
+func fmtB(dst []byte, neg bool, mant uint64, exp int, flt *floatInfo) []byte { //注：将尾数mant与指数exp结合，根据neg判断整数是否为负数，将数据存储在dst中并返回
 	// 符号
 	if neg {
 		dst = append(dst, '-') //注：如果neg == true，输出-
