@@ -13,8 +13,8 @@ import (
 
 func sigpipe() // implemented in package runtime
 
-// syscallMode returns the syscall-specific mode bits from Go's portable mode bits.
-func syscallMode(i FileMode) (o uint32) {
+// syscallMode 从Go的可移植模式位返回特定于系统调用的模式位。
+func syscallMode(i FileMode) (o uint32) { // 注：#
 	o |= uint32(i.Perm())
 	if i&ModeSetuid != 0 {
 		o |= syscall.S_ISUID

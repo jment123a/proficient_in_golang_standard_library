@@ -56,7 +56,7 @@ flag包用于解析命令行标志
 		1) newxxxValue(val xxx, p *xxx) *xxxValue		工厂函数，将val赋值给p，返回boolValue类型的p
 		2) (b *xxxValue) Set(s string) error			获取xxx类型的b
 		3) (b *xxxValue) String() string				将b格式化为字符串并返回
-		4) func (b *boolValue) IsBoolFlag() bool		只有boolValue类型才有的方法，返回true
+		4) (b *boolValue) IsBoolFlag() bool				只有boolValue类型才有的方法，返回true
 	2. FlagSet：标志集合的方法
 		1) (f *FlagSet) Output() io.Writer				获取f.output，如果为nil返回os.Stderr
 		2) (f *FlagSet) SetOutput(output io.Writer)		将f.output设置为output

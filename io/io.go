@@ -400,7 +400,7 @@ type SectionReader struct { //注：读取r的一部分数据，起始位置为b
 	limit int64
 }
 
-func (s *SectionReader) Read(p []byte) (n int, err error) {
+func (s *SectionReader) Read(p []byte) (n int, err error) { // 注：#
 	if s.off >= s.limit { //注：如果偏移量超过上限，返回EOF
 		return 0, EOF
 	}

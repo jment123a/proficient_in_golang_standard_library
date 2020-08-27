@@ -23,54 +23,53 @@ var (
 	ErrNoDeadline = errNoDeadline() // "文件类型不支持截止日期"
 )
 
-func errInvalid() error    { return oserror.ErrInvalid }
-func errPermission() error { return oserror.ErrPermission }
-func errExist() error      { return oserror.ErrExist }
-func errNotExist() error   { return oserror.ErrNotExist }
-func errClosed() error     { return oserror.ErrClosed }
-func errNoDeadline() error { return poll.ErrNoDeadline }
+func errInvalid() error    { return oserror.ErrInvalid }    // 注："无效的参数"
+func errPermission() error { return oserror.ErrPermission } // 注："没有权限"
+func errExist() error      { return oserror.ErrExist }      // 注："文件已存在"
+func errNotExist() error   { return oserror.ErrNotExist }   // 注："文件不存在
+func errClosed() error     { return oserror.ErrClosed }     // 注："文件已关闭"
+func errNoDeadline() error { return poll.ErrNoDeadline }    // 注："文件类型不支持截止日期"
 
 type timeout interface {
 	Timeout() bool
 }
 
-// PathError records an error and the operation and file path that caused it.
-type PathError struct {
-	Op   string
-	Path string
-	Err  error
+// PathError 记录错误以及导致该错误的操作和文件路径。
+type PathError struct { // 注：#记录带有错误文件路径的错误
+	Op   string // 注：出现错误的操作
+	Path string // 注：出现错误的文件路径
+	Err  error  // 注：出现的错误
 }
 
-func (e *PathError) Error() string { return e.Op + " " + e.Path + ": " + e.Err.Error() }
+func (e *PathError) Error() string { return e.Op + " " + e.Path + ": " + e.Err.Error() } // 注：返回格式化的错误
 
-func (e *PathError) Unwrap() error { return e.Err }
+func (e *PathError) Unwrap() error { return e.Err } // 注：解包，返回错误Err
 
-// Timeout reports whether this error represents a timeout.
-func (e *PathError) Timeout() bool {
-	t, ok := e.Err.(timeout)
+// Timeout 报告此错误是否表示超时。
+func (e *PathError) Timeout() bool { // 注：获取错误e是否超时
+	t, ok := e.Err.(timeout) // 注：如果e实现timeout接口，执行Timeout方法
 	return ok && t.Timeout()
 }
 
-// SyscallError records an error from a specific system call.
+// SyscallError 记录来自特定系统调用的错误。
 type SyscallError struct {
-	Syscall string
-	Err     error
+	Syscall string // 注：出现错误的系统调用
+	Err     error  // 注：出现的错误
 }
 
-func (e *SyscallError) Error() string { return e.Syscall + ": " + e.Err.Error() }
+func (e *SyscallError) Error() string { return e.Syscall + ": " + e.Err.Error() } // 注：返回格式化的错误
 
-func (e *SyscallError) Unwrap() error { return e.Err }
+func (e *SyscallError) Unwrap() error { return e.Err } // 注：解包，返回错误Err
 
-// Timeout reports whether this error represents a timeout.
-func (e *SyscallError) Timeout() bool {
-	t, ok := e.Err.(timeout)
+// Timeout 报告此错误是否表示超时。
+func (e *SyscallError) Timeout() bool { // 注：获取错误e是否超时
+	t, ok := e.Err.(timeout) // 注：如果e实现timeout接口，执行Timeout方法
 	return ok && t.Timeout()
 }
 
-// NewSyscallError returns, as an error, a new SyscallError
-// with the given system call name and error details.
-// As a convenience, if err is nil, NewSyscallError returns nil.
-func NewSyscallError(syscall string, err error) error {
+// NewSyscallError 作为错误返回具有给定系统调用名称和错误详细信息的新SyscallError。
+// 为方便起见，如果err为nil，则NewSyscallError返回nil。
+func NewSyscallError(syscall string, err error) error { // 注：工厂函数，生成一个SyscallError
 	if err == nil {
 		return nil
 	}
@@ -79,46 +78,42 @@ func NewSyscallError(syscall string, err error) error {
 
 // IsExist 返回一个布尔值，指示是否已知该错误以报告文件或目录已存在。
 // ErrExist以及一些系统调用错误都可以满足要求。
-func IsExist(err error) bool {
+func IsExist(err error) bool { // 注：获取err的底层错误是否为"文件已存在"
 	return underlyingErrorIs(err, ErrExist)
 }
 
 // IsNotExist 返回一个布尔值，该布尔值指示是否已知该错误以报告文件或目录不存在。
 // ErrNotExist以及一些系统调用错误都可以满足要求。
-func IsNotExist(err error) bool {
+func IsNotExist(err error) bool { // 注：获取err的底层错误是否为"文件不存在"
 	return underlyingErrorIs(err, ErrNotExist)
 }
 
-// IsPermission returns a boolean indicating whether the error is known to
-// report that permission is denied. It is satisfied by ErrPermission as well
-// as some syscall errors.
-func IsPermission(err error) bool {
+// IsPermission 返回一个布尔值，指示是否已知该错误，以报告权限被拒绝。 ErrPermission以及一些系统调用错误都可以满足要求。
+func IsPermission(err error) bool { // 注：获取err的底层错误是否为"没有权限"
 	return underlyingErrorIs(err, ErrPermission)
 }
 
-// IsTimeout returns a boolean indicating whether the error is known
-// to report that a timeout occurred.
-func IsTimeout(err error) bool {
+// IsTimeout 返回一个布尔值，指示是否已知该错误以报告发生了超时。
+func IsTimeout(err error) bool { // 注：获取err的底层错误是否超时
 	terr, ok := underlyingError(err).(timeout)
 	return ok && terr.Timeout()
 }
 
-func underlyingErrorIs(err, target error) bool {
-	// Note that this function is not errors.Is:
-	// underlyingError only unwraps the specific error-wrapping types
-	// that it historically did, not all errors implementing Unwrap().
+func underlyingErrorIs(err, target error) bool { // 注：获取err的底层错误是否为target
+	// 请注意，此函数不是错误。
+	// underlyingError仅解包其过去所做的特定错误包装类型，而不是实现Unwrap()的所有错误。
 	err = underlyingError(err)
-	if err == target {
+	if err == target { // 注：如果err与target的底层错误相同，返回true
 		return true
 	}
-	// To preserve prior behavior, only examine syscall errors.
-	e, ok := err.(syscallErrorType)
+	// 要保留以前的行为，请仅检查syscall错误。
+	e, ok := err.(syscallErrorType) // 注：#否则检查syscall错误
 	return ok && e.Is(target)
 }
 
-// underlyingError returns the underlying error for known os error types.
-func underlyingError(err error) error {
-	switch err := err.(type) {
+// underlyingError 返回已知操作系统错误类型的基础错误。
+func underlyingError(err error) error { // 注：获取err的底层错误
+	switch err := err.(type) { // 注：如果err的类型为PathError/LinkError/SyscallError，返回底层错误
 	case *PathError:
 		return err.Err
 	case *LinkError:
@@ -126,5 +121,5 @@ func underlyingError(err error) error {
 	case *SyscallError:
 		return err.Err
 	}
-	return err
+	return err // 注：否则返回本身
 }

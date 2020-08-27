@@ -45,16 +45,16 @@ import (
 )
 
 // Name 返回显示给Open的文件名。
-func (f *File) Name() string { return f.name }
+func (f *File) Name() string { return f.name } // 注：获取f的名称
 
 // Stdin、Stdout和Stderr是打开的文件，它们指向标准输入，标准输出和标准错误文件描述符。
 //
 // 请注意，Go运行时会为恐慌和崩溃写入标准错误；
 // 关闭Stderr可能会使这些消息转到其他地方，甚至可能到达以后打开的文件中。
 var (
-	Stdin  = NewFile(uintptr(syscall.Stdin), "/dev/stdin")
-	Stdout = NewFile(uintptr(syscall.Stdout), "/dev/stdout")
-	Stderr = NewFile(uintptr(syscall.Stderr), "/dev/stderr")
+	Stdin  = NewFile(uintptr(syscall.Stdin), "/dev/stdin")   // 注：标准输入文件描述符，例：fmt.Scanf
+	Stdout = NewFile(uintptr(syscall.Stdout), "/dev/stdout") // 注：标准输出文件描述符，例：fmt.Printf
+	Stderr = NewFile(uintptr(syscall.Stderr), "/dev/stderr") // 注：标准错误文件描述符，例：fmt.Errorf
 )
 
 // OpenFile的标志包装基础系统的标志。 并非所有标志都可以在给定的系统上实现。
@@ -99,20 +99,20 @@ func (e *LinkError) Unwrap() error { //注：返回error
 // Read 从文件中读取多达len(b)个字节。
 // 返回读取的字节数和遇到的任何错误。
 // 在文件末尾，Read返回0，即io.EOF。
-func (f *File) Read(b []byte) (n int, err error) {
-	if err := f.checkValid("read"); err != nil { //注：f是否有效
+func (f *File) Read(b []byte) (n int, err error) { // 注：#
+	if err := f.checkValid("read"); err != nil { // 注：#f是否有效
 		return 0, err
 	}
 	n, e := f.read(b)
 	return n, f.wrapErr("read", e)
 }
 
-// ReadAt reads len(b) bytes from the File starting at byte offset off.
-// It returns the number of bytes read and the error, if any.
-// ReadAt always returns a non-nil error when n < len(b).
-// At end of file, that error is io.EOF.
-func (f *File) ReadAt(b []byte, off int64) (n int, err error) {
-	if err := f.checkValid("read"); err != nil {
+// ReadAt 从字节偏移量关闭的文件中读取len(b)个字节。
+// 返回读取的字节数和错误（如果有）。
+// 当n < len(b)时，ReadAt始终返回非nil错误。
+// 在文件末尾，该错误是io.EOF。
+func (f *File) ReadAt(b []byte, off int64) (n int, err error) { // 注：#
+	if err := f.checkValid("read"); err != nil { // 注：#
 		return 0, err
 	}
 
@@ -133,11 +133,11 @@ func (f *File) ReadAt(b []byte, off int64) (n int, err error) {
 	return
 }
 
-// Write writes len(b) bytes to the File.
-// It returns the number of bytes written and an error, if any.
-// Write returns a non-nil error when n != len(b).
-func (f *File) Write(b []byte) (n int, err error) {
-	if err := f.checkValid("write"); err != nil {
+// Write 将len(b)个字节写入文件。
+// 返回写入的字节数和错误（如果有）。
+// 当n != len(b)时，Write返回一个非nil错误。
+func (f *File) Write(b []byte) (n int, err error) { // 注：#
+	if err := f.checkValid("write"); err != nil { // 注：#
 		return 0, err
 	}
 	n, e := f.write(b)
@@ -157,15 +157,15 @@ func (f *File) Write(b []byte) (n int, err error) {
 	return n, err
 }
 
-var errWriteAtInAppendMode = errors.New("os: invalid use of WriteAt on file opened with O_APPEND")
+var errWriteAtInAppendMode = errors.New("os: invalid use of WriteAt on file opened with O_APPEND") // 错误："在以O_APPEND打开的文件上无效使用WriteAt"
 
-// WriteAt writes len(b) bytes to the File starting at byte offset off.
-// It returns the number of bytes written and an error, if any.
-// WriteAt returns a non-nil error when n != len(b).
+// WriteAt 从字节偏移量开始将len(b)字节写入文件。
+// 返回写入的字节数和错误（如果有）。
+// 当n != len(b)时，WriteAt返回非nil错误。
 //
-// If file was opened with the O_APPEND flag, WriteAt returns an error.
-func (f *File) WriteAt(b []byte, off int64) (n int, err error) {
-	if err := f.checkValid("write"); err != nil {
+// 如果使用O_APPEND标志打开了文件，则WriteAt返回错误。
+func (f *File) WriteAt(b []byte, off int64) (n int, err error) { // 注：#
+	if err := f.checkValid("write"); err != nil { // 注：#
 		return 0, err
 	}
 	if f.appendMode {
@@ -189,17 +189,13 @@ func (f *File) WriteAt(b []byte, off int64) (n int, err error) {
 	return
 }
 
-// Seek sets the offset for the next Read or Write on file to offset, interpreted
-// according to whence: 0 means relative to the origin of the file, 1 means
-// relative to the current offset, and 2 means relative to the end.
-// It returns the new offset and an error, if any.
-// The behavior of Seek on a file opened with O_APPEND is not specified.
+// Seek 将下一次在文件上读取或写入的偏移量设置为偏移量，根据whence进行解释：0表示相对于文件原点，1表示相对于当前偏移量，2表示相对于末尾。
+// 返回新的偏移量和错误（如果有）。
+// 未指定使用O_APPEND打开的文件的Seek行为。
 //
-// If f is a directory, the behavior of Seek varies by operating
-// system; you can seek to the beginning of the directory on Unix-like
-// operating systems, but not on Windows.
-func (f *File) Seek(offset int64, whence int) (ret int64, err error) {
-	if err := f.checkValid("seek"); err != nil {
+// 如果f是目录，则Seek的行为因操作系统而异； 您可以在类似Unix的操作系统上找到目录的开头，但不能在Windows上找到。
+func (f *File) Seek(offset int64, whence int) (ret int64, err error) { // 注：#
+	if err := f.checkValid("seek"); err != nil { // 注：#
 		return 0, err
 	}
 	r, e := f.seek(offset, whence)
@@ -212,26 +208,25 @@ func (f *File) Seek(offset int64, whence int) (ret int64, err error) {
 	return r, nil
 }
 
-// WriteString is like Write, but writes the contents of string s rather than
-// a slice of bytes.
-func (f *File) WriteString(s string) (n int, err error) {
+// WriteString 类似于Write，但是写入字符串s的内容，而不是字节的片段。
+func (f *File) WriteString(s string) (n int, err error) { // 注：向f写入s，返回写入的字符长度n与错误err
 	return f.Write([]byte(s))
 }
 
 // Mkdir 使用指定的名称和权限位（在umask之前）创建一个新目录。
 // 如果有错误，它将是*PathError类型。
 func Mkdir(name string, perm FileMode) error {
-	if runtime.GOOS == "windows" && isWindowsNulName(name) {
-		return &PathError{"mkdir", name, syscall.ENOTDIR}
+	if runtime.GOOS == "windows" && isWindowsNulName(name) { // 注：如果操作系统是windows并且name == "NUL"
+		return &PathError{"mkdir", name, syscall.ENOTDIR} // 注：返回路径错误，ERROR_PATH_NOT_FOUND
 	}
-	e := syscall.Mkdir(fixLongPath(name), syscallMode(perm))
+	e := syscall.Mkdir(fixLongPath(name), syscallMode(perm)) // 注：创建文件夹name
 
 	if e != nil {
-		return &PathError{"mkdir", name, e}
+		return &PathError{"mkdir", name, e} // 错误："路径错误"
 	}
 
-	// mkdir(2) itself won't handle the sticky bit on *BSD and Solaris
-	if !supportsCreateWithStickyBit && perm&ModeSticky != 0 {
+	// mkdir(2)本身不会处理*BSD和Solaris上的粘滞位
+	if !supportsCreateWithStickyBit && perm&ModeSticky != 0 { // 注：#
 		e = setStickyBit(name)
 
 		if e != nil {
@@ -551,9 +546,9 @@ func (f *File) SyscallConn() (syscall.RawConn, error) {
 	return newRawConn(f)
 }
 
-// isWindowsNulName reports whether name is os.DevNull ('NUL') on Windows.
-// True is returned if name is 'NUL' whatever the case.
-func isWindowsNulName(name string) bool {
+// isWindowsNulName 报告在Windows上名称是否为os.DevNull('NUL')。
+// 在任何情况下，如果名称为“"NUL"，则返回True。
+func isWindowsNulName(name string) bool { // 注：获取name是否为"NUL"
 	if len(name) != 3 {
 		return false
 	}

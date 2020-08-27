@@ -1,5 +1,5 @@
 /*
-	结构体
+	结构体与接口
 		type Buffer struct {
 			buf      []byte // 缓冲区
 			off      int    // 当前读取的索引

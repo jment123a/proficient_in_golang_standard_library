@@ -132,13 +132,13 @@ func (r *PipeReader) Read(data []byte) (n int, err error) { //注：调用pipe.R
 }
 
 // Close 关闭Reader； 随后写入管道进行一半的操作将返回错误ErrClosedPipe。
-func (r *PipeReader) Close() error {
+func (r *PipeReader) Close() error { // 注：#关闭管道
 	return r.CloseWithError(nil)
 }
 
 // CloseWithError 关闭阅读器； 随后写入管道进行一半的操作将返回错误err。
 // CloseWithError永远不会覆盖以前的错误（如果存在），并且始终返回nil。
-func (r *PipeReader) CloseWithError(err error) error {
+func (r *PipeReader) CloseWithError(err error) error { // 注：#关闭管道
 	return r.p.CloseRead(err)
 }
 
@@ -150,18 +150,18 @@ type PipeWriter struct {
 // Write 实现标准的Write接口：
 // 它将数据写入管道，直到一个或多个读取器消耗完所有数据或关闭读取端为止，它一直阻塞。
 // 如果读取端因错误而关闭，则该err返回为err; 否则err是ErrClosedPipe。
-func (w *PipeWriter) Write(data []byte) (n int, err error) {
+func (w *PipeWriter) Write(data []byte) (n int, err error) { // 注：w写入data
 	return w.p.Write(data)
 }
 
 // Close 关闭Writer； 从管道读取的一半进行的后续读取将不返回任何字节和EOF。
-func (w *PipeWriter) Close() error {
+func (w *PipeWriter) Close() error { // 注：关闭管道
 	return w.CloseWithError(nil)
 }
 
 // CloseWithError 关闭编写器； 从管道读取的一半进行的后续读取将不返回任何字节，并且错误err；如果err为nil，则返回EOF。
 // CloseWithError永远不会覆盖以前的错误（如果存在），并且始终返回nil。
-func (w *PipeWriter) CloseWithError(err error) error {
+func (w *PipeWriter) CloseWithError(err error) error { // 注：关闭管道
 	return w.p.CloseWrite(err)
 }
 
