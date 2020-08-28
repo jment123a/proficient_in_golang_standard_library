@@ -16,17 +16,17 @@ import (
 // file 是*File的真实表示。
 // 额外的间接级别确保os的任何客户端都不能覆盖此数据，这可能导致终结器关闭错误的文件描述符。
 type file struct {
-	pfd        poll.FD
-	name       string
-	dirinfo    *dirInfo // nil unless directory being read
-	appendMode bool     // whether file is opened for appending
+	pfd        poll.FD  // 注：文件描述符
+	name       string   // 注：
+	dirinfo    *dirInfo // nil，除非正在读取目录，注：记录目录信息
+	appendMode bool     // 是否打开文件进行追加，注：是否可以追加数据
 }
 
-// Fd returns the Windows handle referencing the open file.
-// The handle is valid only until f.Close is called or f is garbage collected.
-// On Unix systems this will cause the SetDeadline methods to stop working.
-func (file *File) Fd() uintptr {
-	if file == nil {
+// Fd 返回引用打开文件的Windows句柄。
+// 只有在调用f.Close或f被垃圾回收之前，该句柄才有效。
+// 在Unix系统上，这将导致SetDeadline方法停止工作。
+func (file *File) Fd() uintptr { // 注：获取file的句柄
+	if file == nil { // 注：如果file为空，返回无效句柄
 		return uintptr(syscall.InvalidHandle)
 	}
 	return uintptr(file.pfd.Sysfd)
@@ -76,12 +76,12 @@ func NewFile(fd uintptr, name string) *File {
 	return newFile(h, name, "file")
 }
 
-// Auxiliary information if the File describes a directory
-type dirInfo struct {
-	data     syscall.Win32finddata
+// 辅助信息，如果文件描述符是目录
+type dirInfo struct { // 注：目录信息
+	data     syscall.Win32finddata // 注：文件信息
 	needdata bool
 	path     string
-	isempty  bool // set if FindFirstFile returns ERROR_FILE_NOT_FOUND
+	isempty  bool // 设置是否FindFirstFile返回ERROR_FILE_NOT_FOUND
 }
 
 func epipecheck(file *File, e error) {
@@ -93,8 +93,8 @@ const DevNull = "NUL"
 
 func (f *file) isdir() bool { return f != nil && f.dirinfo != nil }
 
-func openFile(name string, flag int, perm FileMode) (file *File, err error) {
-	r, e := syscall.Open(fixLongPath(name), flag|syscall.O_CLOEXEC, syscallMode(perm))
+func openFile(name string, flag int, perm FileMode) (file *File, err error) { // 注：#
+	r, e := syscall.Open(fixLongPath(name), flag|syscall.O_CLOEXEC, syscallMode(perm)) // 注：#
 	if e != nil {
 		return nil, e
 	}
@@ -157,12 +157,12 @@ func openDir(name string) (file *File, err error) {
 	return f, nil
 }
 
-// openFileNolog is the Windows implementation of OpenFile.
+// openFileNolog 是OpenFile的Windows实现。
 func openFileNolog(name string, flag int, perm FileMode) (*File, error) {
-	if name == "" {
+	if name == "" { // 注：如果name为空，返回路径错误
 		return nil, &PathError{"open", name, syscall.ENOENT}
 	}
-	r, errf := openFile(name, flag, perm)
+	r, errf := openFile(name, flag, perm) // 注：#
 	if errf == nil {
 		return r, nil
 	}
@@ -209,8 +209,8 @@ func (file *file) close() error {
 	return err
 }
 
-// read reads up to len(b) bytes from the File.
-// It returns the number of bytes read and an error, if any.
+// read 从文件中读取多达len(b)个字节。
+// 返回读取的字节数和错误（如果有）。
 func (f *File) read(b []byte) (n int, err error) {
 	n, err = f.pfd.Read(b)
 	runtime.KeepAlive(f)

@@ -100,7 +100,7 @@ func (e *LinkError) Unwrap() error { //注：返回error
 // 返回读取的字节数和遇到的任何错误。
 // 在文件末尾，Read返回0，即io.EOF。
 func (f *File) Read(b []byte) (n int, err error) { // 注：#
-	if err := f.checkValid("read"); err != nil { // 注：#f是否有效
+	if err := f.checkValid("read"); err != nil { // 注：文件描述符f是否有效
 		return 0, err
 	}
 	n, e := f.read(b)
@@ -215,11 +215,11 @@ func (f *File) WriteString(s string) (n int, err error) { // 注：向f写入s�
 
 // Mkdir 使用指定的名称和权限位（在umask之前）创建一个新目录。
 // 如果有错误，它将是*PathError类型。
-func Mkdir(name string, perm FileMode) error {
+func Mkdir(name string, perm FileMode) error { // 注：#
 	if runtime.GOOS == "windows" && isWindowsNulName(name) { // 注：如果操作系统是windows并且name == "NUL"
 		return &PathError{"mkdir", name, syscall.ENOTDIR} // 注：返回路径错误，ERROR_PATH_NOT_FOUND
 	}
-	e := syscall.Mkdir(fixLongPath(name), syscallMode(perm)) // 注：创建文件夹name
+	e := syscall.Mkdir(fixLongPath(name), syscallMode(perm)) // 注：#创建文件夹name
 
 	if e != nil {
 		return &PathError{"mkdir", name, e} // 错误："路径错误"
@@ -238,26 +238,26 @@ func Mkdir(name string, perm FileMode) error {
 	return nil
 }
 
-// setStickyBit adds ModeSticky to the permission bits of path, non atomic.
-func setStickyBit(name string) error {
-	fi, err := Stat(name)
+// setStickyBit 将ModeSticky添加到非原子路径的许可位。
+func setStickyBit(name string) error { // 注：#
+	fi, err := Stat(name) // 注：#
 	if err != nil {
 		return err
 	}
 	return Chmod(name, fi.Mode()|ModeSticky)
 }
 
-// Chdir changes the current working directory to the named directory.
-// If there is an error, it will be of type *PathError.
-func Chdir(dir string) error {
-	if e := syscall.Chdir(dir); e != nil {
-		testlog.Open(dir) // observe likely non-existent directory
+// Chdir 将当前工作目录更改为命名目录。
+// 如果有错误，它将是*PathError类型。
+func Chdir(dir string) error { // 注：#
+	if e := syscall.Chdir(dir); e != nil { // 注：如果更改工作目录失败，返回路径错误
+		testlog.Open(dir) // 观察可能不存在的目录，注：#执行testlog.logger.Open(dir)
 		return &PathError{"chdir", dir, e}
 	}
-	if log := testlog.Logger(); log != nil {
-		wd, err := Getwd()
+	if log := testlog.Logger(); log != nil { // 注：获取logger
+		wd, err := Getwd() // 注：#
 		if err == nil {
-			log.Chdir(wd)
+			log.Chdir(wd) // 注：执行logger.Chdir(wd)
 		}
 	}
 	return nil
@@ -266,15 +266,14 @@ func Chdir(dir string) error {
 // Open 打开命名文件以供读取。 如果成功，则可以使用返回文件上的方法进行读取；
 // 关联的文件描述符的模式为O_RDONLY。
 // 如果有错误，它将是*PathError类型。
-func Open(name string) (*File, error) {
-	return OpenFile(name, O_RDONLY, 0)
+func Open(name string) (*File, error) { // 注：#
+	return OpenFile(name, O_RDONLY, 0) // 注：#
 }
 
-// Create creates or truncates the named file. If the file already exists,
-// it is truncated. If the file does not exist, it is created with mode 0666
-// (before umask). If successful, methods on the returned File can
-// be used for I/O; the associated file descriptor has mode O_RDWR.
-// If there is an error, it will be of type *PathError.
+// Create 创建或截断命名文件。 如果该文件已经存在，它将被截断。
+// 如果该文件不存在，则使用模式0666（在umask之前）创建该文件。
+// 如果成功，则可以将返回的File上的方法用于I/O。 关联的文件描述符的模式为O_RDWR。
+// 如果有错误，它将是* PathError类型。
 func Create(name string) (*File, error) {
 	return OpenFile(name, O_RDWR|O_CREATE|O_TRUNC, 0666)
 }
@@ -284,9 +283,9 @@ func Create(name string) (*File, error) {
 // 如果文件不存在，并且传递了O_CREATE标志，则使用模式perm（在umask之前）创建文件。
 // 如果成功，则可以将返回的File上的方法用于I / O。
 // 如果有错误，它将是*PathError类型。
-func OpenFile(name string, flag int, perm FileMode) (*File, error) {
-	testlog.Open(name)
-	f, err := openFileNolog(name, flag, perm)
+func OpenFile(name string, flag int, perm FileMode) (*File, error) { // 注：#
+	testlog.Open(name)                        // 注：调用logger.Open(name)
+	f, err := openFileNolog(name, flag, perm) // 注：#
 	if err != nil {
 		return nil, err
 	}

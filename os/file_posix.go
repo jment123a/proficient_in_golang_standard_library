@@ -161,9 +161,9 @@ func (f *File) setReadDeadline(t time.Time) error {
 	return f.pfd.SetReadDeadline(t)
 }
 
-// setWriteDeadline sets the write deadline.
+// setWriteDeadline 设置写入期限。
 func (f *File) setWriteDeadline(t time.Time) error {
-	if err := f.checkValid("SetWriteDeadline"); err != nil {
+	if err := f.checkValid("SetWriteDeadline"); err != nil { // 注：如果f无效，返回错误
 		return err
 	}
 	return f.pfd.SetWriteDeadline(t)
@@ -171,7 +171,7 @@ func (f *File) setWriteDeadline(t time.Time) error {
 
 // checkValid 检查f是否有效使用。
 // 如果没有，则返回一个适当的错误，可能包含操作名称op。
-func (f *File) checkValid(op string) error { //注：返回f是否可以被有效使用
+func (f *File) checkValid(op string) error { //注：返回f是否有效
 	if f == nil {
 		return ErrInvalid //注：无效的参数
 	}
