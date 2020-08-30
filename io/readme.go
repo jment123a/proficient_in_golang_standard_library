@@ -86,7 +86,7 @@
 		type devNull int
 			(devNull) Write(p []byte) (int, error) 							总是写入成功
 			(devNull) WriteString(s string) (int, error) 					总是写入成功
-			(devNull) ReadFrom(r io.Reader) (n int64, err error)			读取r中读取一次数据到缓冲区中，返回读取道德数据长度n与错误n
+			(devNull) ReadFrom(r io.Reader) (n int64, err error)			读取r中读取一次数据到缓冲区中，返回读取到的数据长度n与错误err
 		---ioutil/tempfile.go
 		reseed() uint32 													返回根据当前纳秒级时间戳+进程id组成的随机数种子
 		nextRandom() string 												返回一个随机的文件名，长度为10
