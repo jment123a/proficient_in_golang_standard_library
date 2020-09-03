@@ -10,3 +10,5 @@
 		New(text string) error
 			(e *errorString) Error() string			返回错误字符串
 */
+
+package errors

@@ -115,7 +115,7 @@ func IsPunct(r rune) bool { // 注：获取r是否为标点（字符集：P）
 // IsSpace 报告符文是否为Unicode的White Space属性定义的空格字符； 在Latin-1空间中，这是
 // '\t', '\n', '\v', '\f', '\r', ' ', U+0085 (NEL), U+00A0 (NBSP).
 // 间隔字符的其他定义由类别Z和属性Pattern_White_Space设置。
-func IsSpace(r rune) bool { // 注：#获取r是否为空格
+func IsSpace(r rune) bool { // 注：获取r是否为空格
 	// 此属性与Z不同。 特例吧。
 	if uint32(r) <= MaxLatin1 { // 注：如果r是Latin-1编码字符，直接判断是否为空格
 		switch r {
@@ -124,7 +124,7 @@ func IsSpace(r rune) bool { // 注：#获取r是否为空格
 		}
 		return false
 	}
-	return isExcludingLatin(White_Space, r) // 注：#
+	return isExcludingLatin(White_Space, r)
 }
 
 // IsSymbol 报告rune是否为符号字符。

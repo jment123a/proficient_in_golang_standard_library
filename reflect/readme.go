@@ -440,3 +440,5 @@
 	(t *rtype) Out(i int) Type				获取方法类型t的第i个输出参数的类型
 	(t *funcType) out() []*rtype			获取方法类型t的输出参数
 */
+
+package reflect

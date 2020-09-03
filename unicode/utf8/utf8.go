@@ -246,7 +246,7 @@ func DecodeRuneInString(s string) (r rune, size int) { // 注：获取s的第一
 //
 // 如果编码不正确，则它是无效的UTF-8，对超出范围或不是该值的最短UTF-8编码的符文进行编码。
 // 不执行其他任何验证。
-func DecodeLastRune(p []byte) (r rune, size int) { // 注：倒序获取第一个rune，返回rune r与大小size
+func DecodeLastRune(p []byte) (r rune, size int) { // 注：获取p中最后一个rune，返回rune r与大小size
 	end := len(p)
 	if end == 0 { // 注：如果p为空，返回错误rune
 		return RuneError, 0
@@ -283,7 +283,7 @@ func DecodeLastRune(p []byte) (r rune, size int) { // 注：倒序获取第一�
 //
 // 如果编码不正确，则它是无效的UTF-8，对超出范围或不是该值的最短UTF-8编码的符文进行编码。
 // 不执行其他任何验证。
-func DecodeLastRuneInString(s string) (r rune, size int) { // 注：倒序获取第一个rune（同DecodeLastRune）
+func DecodeLastRuneInString(s string) (r rune, size int) { // 注：获取p中最后一个rune（同DecodeLastRune）
 	end := len(s)
 	if end == 0 {
 		return RuneError, 0

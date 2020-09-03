@@ -15,7 +15,7 @@
 		函数与方法：
 			FullRune(p []byte) bool									获取p中是否有一个完整的rune
 			DecodeRune(p []byte) (r rune, size int) 				获取p的第一个rune
-			DecodeLastRune(p []byte) (r rune, size int)				倒序获取第一个rune
+			DecodeLastRune(p []byte) (r rune, size int)				获取p的最后一个rune
 			RuneLen(r rune) int 									获取r占用的字节数
 			EncodeRune(p []byte, r rune) int						将r写入p
 			RuneCount(p []byte) int									获取p中rune的数量
@@ -55,7 +55,7 @@
 			IsMark(r rune) bool								获取r是否为标记（字符集：M）
 			IsNumber(r rune) bool							获取r是否为标记（字符集：N）
 			IsPunct(r rune) bool							获取r是否为标点（字符集：P）
-			IsSpace(r rune) bool							#获取r是否为空格
+			IsSpace(r rune) bool							获取r是否为空格
 			IsSymbol(r rune) bool							获取r是否为符号（字符集：S）
 
 	---letter.go
@@ -83,3 +83,5 @@
 			(special SpecialCase) ToTitle(r rune) rune				将special转为标题大小写字母
 			(special SpecialCase) ToLower(r rune) rune				将special转为小写字母
 */
+
+package unicode
