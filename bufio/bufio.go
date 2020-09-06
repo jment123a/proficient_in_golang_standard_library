@@ -1,6 +1,6 @@
-//版权所有2009 The Go Authors。 版权所有。
-//此源代码的使用受BSD样式的约束
-//可以在LICENSE文件中找到的许可证。
+// 版权所有2009 The Go Authors。 版权所有。
+// 此源代码的使用受BSD样式的约束
+// 可以在LICENSE文件中找到的许可证。
 
 // Package bufio 实现了缓冲的I/O。
 // 它包装了一个io.Reader或io.Writer对象，创建了另一个对象（Reader或Writer），该对象也实现了接口，但提供了缓冲和一些文本I/O帮助。
